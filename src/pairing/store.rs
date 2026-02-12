@@ -324,7 +324,7 @@ impl PairingStore {
             .read(true)
             .write(true)
             .create(true)
-            .truncate(true)
+            .truncate(false)
             .open(&path)?;
         file.lock_exclusive()?;
         let content = fs::read_to_string(&path).unwrap_or_default();
@@ -334,7 +334,9 @@ impl PairingStore {
         let cutoff = now.saturating_sub(PAIRING_APPROVE_RATE_WINDOW_SECS);
         data.failed_at.retain(|&t| t >= cutoff);
         let json = serde_json::to_string_pretty(&data)?;
-        fs::write(&path, json)?;
+        file.set_len(0)?;
+        std::io::Seek::seek(&mut &file, std::io::SeekFrom::Start(0))?;
+        std::io::Write::write_all(&mut &file, json.as_bytes())?;
         fs4::FileExt::unlock(&file)?;
         Ok(())
     }

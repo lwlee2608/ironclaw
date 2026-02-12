@@ -1087,6 +1087,12 @@ mod tests {
 
     #[tokio::test]
     async fn test_install_missing_bundled_channels_installs_telegram() {
+        // Skip when WASM channel artifacts haven't been built locally
+        if !available_channel_names().contains(&"telegram") {
+            eprintln!("skipping: telegram channel not built");
+            return;
+        }
+
         let dir = tempdir().unwrap();
         let installed = HashSet::<String>::new();
 
